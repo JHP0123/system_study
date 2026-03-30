@@ -7,8 +7,8 @@
 
 int main(int argc, char **argv)
 {
-    char *hostname = (*argv + 1);
-    char *port = (*argv + 2);
+    char *hostname = argv[1];
+    char *port = argv[2];
     char send_buffer[MAX_LINE];
     char recv_buffer[MAX_LINE];
     int clientfd;
@@ -25,13 +25,14 @@ int main(int argc, char **argv)
                 fprintf(stderr, "send() error: %s\n", strerror(errno));
                 break;
             }
-        recv_b = (clientfd, recv_buffer, MAX_LINE, 0);
+        recv_b = recv(clientfd, recv_buffer, MAX_LINE, 0);
             if (recv_b == -1)
             {
                 fprintf(stderr, "recv() error: %s\n", strerror(errno));
                 break;
             }
-        printf("echo: %s\n", recv_buffer);
+        recv_buffer[recv_b] = '\0';
+        printf("echo: %s", recv_buffer);
         fflush(stdout);
     }
 

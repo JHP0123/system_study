@@ -7,7 +7,13 @@
 
 int main(int argc, char **argv)
 {
-    char *port = (*argv + 1);
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        exit(1);
+    }
+
+    char *port = argv[1];
     char echo_buffer[MAX_LINE];
     int connfd;
     int recv_b;
@@ -16,16 +22,22 @@ int main(int argc, char **argv)
     char host_name[MAX_LINE];
     char service_name[MAX_LINE];
 
-    int listenfd = open_listenfd(port);
+    int listenfd = open_listenfd(port);     // create listen fd
+    if (listenfd < 0)
+    {
+        fprintf(stderr, "open_listen error\n");
+        exit(1);
+    }
+
     while (1)
     {
-        if ((connfd = accept(listenfd, (struct sockaddr *)(&serv_addr), &serv_addr_size)) == -1)
+        if ((connfd = accept(listenfd, (struct sockaddr *)(&serv_addr), &serv_addr_size)) == -1)  
         {
             fprintf(stderr, "accept() error: %s\n", strerror(errno));
             continue;
         }
 
-        getnameinfo((struct sockaddr*)(&serv_addr), serv_addr_size,
+        getnameinfo((struct sockaddr*)(&serv_addr), serv_addr_size,     
                     host_name, MAX_LINE,
                     service_name, MAX_LINE, 0);
 
@@ -33,27 +45,17 @@ int main(int argc, char **argv)
         fflush(stdout);
 
         // echo
-        while ((recv_b = recv(connfd, echo_buffer, MAX_LINE, 0)) != -1)
-        {
-            if (recv_b == 0)
-            {
-                printf("connection elegantly closed: [EOF]\n");
-                break;
-            }
-            
-
+        while ((recv_b = recv(connfd, echo_buffer, MAX_LINE, 0)) > 0)                    
+        {            
+            printf("server recieved %d bytes\n", recv_b);
+            send(connfd, echo_buffer, recv_b, 0);
         }
 
-        if (recv_b == -1)
-        {
-            fprintf("recv() error: %s\n", strerror(errno));
-        }
+        if (recv_b == 0)
+            printf("Connection elegantly closed: [EOF]\n");
+        else if (recv_b == -1)
+            fprintf(stderr, "recv() error: %s\n", strerror(errno));
+
         close(connfd);
-
-
     }
-
-
-
-
 }
